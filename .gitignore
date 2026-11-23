@@ -1,0 +1,17 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# Maven
+**/target/
+
+# Build output
+/out/
+
+# Logs
+*.log
+
+# Local environment files
+.env
+.env.*
+!.env.example
