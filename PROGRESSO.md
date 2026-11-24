@@ -1,6 +1,6 @@
 # Progresso do projeto Saga
 
-Última atualização: 23/11/2026
+Última atualização: 24/11/2026
 
 ## Objetivo
 
@@ -14,22 +14,22 @@ Demonstrar o padrão Saga com orquestração entre serviços Spring Boot e Rabbi
 - O `orchestrator` consome a criação, persiste uma `SagaInstance` e envia `ReserveFlightCommand`.
 - O `flight-service` consome o comando, tenta reservar o voo e publica `FlightReservedEvent`.
 - O `orchestrator` recebe a resposta do voo em uma fila/rota própria, avança a saga para a etapa de hotel e publica `ReserveHotelCommand`.
-- O contrato `ReserveHotelCommand` e o enum `CommandType` já existem no `hotel-service`.
+- O `hotel-service` consome `ReserveHotelCommand`, persiste a reserva e publica resultado de sucesso ou falha.
+- O `orchestrator` consome o resultado do hotel, marca carro como próxima etapa em caso de sucesso ou registra falha.
+- A consulta de reserva por cliente usa um parâmetro de rota explícito.
 
 ## Onde paramos
 
-O próximo passo é implementar o recebimento de `ReserveHotelCommand` no `hotel-service`: configurar a fila e a rota `hotel.reserve`, criar o listener e a lógica de reserva e publicar um evento de resposta, como `HotelReservedEvent`, pela rota `hotel.reserved`. Depois, o `orchestrator` precisa consumir essa resposta e avançar a saga.
+O próximo passo é implementar o fluxo do `car-service` e publicar o resultado para o `orchestrator`.
 
 ## O que falta
 
-1. Completar o fluxo do hotel: modelo e persistência da reserva, listener do comando e publicação do evento de sucesso/falha.
-2. Fazer o `orchestrator` consumir a resposta do hotel e iniciar a etapa do carro.
-3. Implementar o fluxo do `car-service` e a conclusão bem-sucedida da saga.
-4. Definir falhas e ações compensatórias, por exemplo cancelar reservas de voo/hotel já confirmadas quando uma etapa posterior falhar.
-5. Tornar o processamento seguro para mensagens repetidas e eventos concorrentes; avaliar controle otimista de versão e transições idempotentes.
-6. Tratar confiabilidade de publicação/consumo, incluindo retries, dead-letter queue e Outbox para evitar divergência entre persistência e publicação RabbitMQ.
-7. Adicionar logs úteis com `sagaId`, `bookingId` e etapa, além de validar o fluxo integrado entre os serviços.
+1. Implementar o fluxo do `car-service` e a conclusão bem-sucedida da saga.
+2. Definir falhas e ações compensatórias, por exemplo cancelar reservas de voo/hotel já confirmadas quando uma etapa posterior falhar.
+3. Tornar o processamento seguro para mensagens repetidas e eventos concorrentes em todos os serviços.
+4. Tratar confiabilidade de publicação/consumo, incluindo retries, dead-letter queue e Outbox para evitar divergência entre persistência e publicação RabbitMQ.
+5. Validar o fluxo integrado entre os serviços e ampliar os testes além do carregamento de contexto.
 
 ## Observação
 
-O fluxo completo ainda não foi validado de ponta a ponta. Os serviços de hotel e carro estão em estágios iniciais; o hotel tem apenas parte do contrato de comando, e o carro ainda não tem o fluxo Saga implementado.
+O fluxo completo ainda não foi validado de ponta a ponta. O serviço de carro ainda não tem o fluxo Saga implementado, e as ações compensatórias continuam pendentes.

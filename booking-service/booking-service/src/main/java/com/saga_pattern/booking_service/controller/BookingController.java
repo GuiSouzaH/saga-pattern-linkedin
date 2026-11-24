@@ -21,9 +21,11 @@ public class BookingController {
         return ResponseEntity.ok(newBooking);
     }
 
-    @GetMapping("/customerId")
-    public ResponseEntity<Booking> getOrderByProductId(@PathVariable String productId) {
-        return bookingServiceImpl.getBookingByCustomerId(productId)
+    @GetMapping("/customerId/{customerId}")
+    public ResponseEntity<Booking> getBookingByCustomerId(
+            @PathVariable("customerId") String customerId
+    ) {
+        return bookingServiceImpl.getBookingByCustomerId(customerId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }

@@ -18,8 +18,9 @@ public class RabbitMQConfig {
     public static final String ORCHESTRATOR_ROUTING_KEY = "orchestrator-routing-key";
     public static final String FLIGHT_RESERVED_QUEUE = "orchestrator-flight-reserved-queue";
     public static final String FLIGHT_RESERVED_ROUTING_KEY = "flight.reserved";
-    public static final String HOTEL_RESERVED_QUEUE = "orchestrator-hotel-reserved-queue";
+    public static final String HOTEL_RESPONSE_QUEUE = "orchestrator-hotel-response-queue";
     public static final String HOTEL_RESERVED_ROUTING_KEY = "hotel.reserved";
+    public static final String HOTEL_RESERVATION_FAILED_ROUTING_KEY = "hotel.reservation.failed";
 
     @Bean
     public DirectExchange orchestratorExchange() {
@@ -34,6 +35,11 @@ public class RabbitMQConfig {
     @Bean
     public Queue flightReservedEventQueue() {
         return new Queue(FLIGHT_RESERVED_QUEUE, true);
+    }
+
+    @Bean
+    public Queue hotelResponseQueue() {
+        return new Queue(HOTEL_RESPONSE_QUEUE, true);
     }
 
     @Bean
@@ -52,6 +58,26 @@ public class RabbitMQConfig {
                 .bind(flightReservedEventQueue)
                 .to(sagaExchange)
                 .with(FLIGHT_RESERVED_ROUTING_KEY);
+    }
+
+    @Bean
+    public Binding hotelReservedEventBinding(@Qualifier("hotelResponseQueue") Queue hotelResponseQueue,
+                                             DirectExchange sagaExchange) {
+        return BindingBuilder
+                .bind(hotelResponseQueue)
+                .to(sagaExchange)
+                .with(HOTEL_RESERVED_ROUTING_KEY);
+    }
+
+    @Bean
+    public Binding hotelReservationFailedEventBinding(
+            @Qualifier("hotelResponseQueue") Queue hotelResponseQueue,
+            DirectExchange sagaExchange
+    ) {
+        return BindingBuilder
+                .bind(hotelResponseQueue)
+                .to(sagaExchange)
+                .with(HOTEL_RESERVATION_FAILED_ROUTING_KEY);
     }
 
     @Bean

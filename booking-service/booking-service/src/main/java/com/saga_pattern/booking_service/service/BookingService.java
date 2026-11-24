@@ -10,5 +10,5 @@ public interface BookingService {
     Booking createBooking(BookingRequest bookingRequest);
 
 
-    Optional<Booking> getBookingByCustomerId (String productId);
+    Optional<Booking> getBookingByCustomerId(String customerId);
 }

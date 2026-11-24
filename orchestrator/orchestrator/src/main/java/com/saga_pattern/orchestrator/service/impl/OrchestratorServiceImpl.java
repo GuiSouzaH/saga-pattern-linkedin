@@ -2,6 +2,7 @@ package com.saga_pattern.orchestrator.service.impl;
 
 import com.saga_pattern.orchestrator.dto.BookingCreatedEvent;
 import com.saga_pattern.orchestrator.dto.FlightReservedEvent;
+import com.saga_pattern.orchestrator.dto.HotelReservationResultEvent;
 import com.saga_pattern.orchestrator.dto.ReserveFlightCommand;
 import com.saga_pattern.orchestrator.dto.ReserveHotelCommand;
 import com.saga_pattern.orchestrator.exceptions.SagaNotFoundException;
@@ -9,6 +10,7 @@ import com.saga_pattern.orchestrator.messaging.SagaCommandPublisher;
 import com.saga_pattern.orchestrator.model.SagaInstance;
 import com.saga_pattern.orchestrator.model.enums.CommandType;
 import com.saga_pattern.orchestrator.model.enums.CurrentStep;
+import com.saga_pattern.orchestrator.model.enums.EventType;
 import com.saga_pattern.orchestrator.model.enums.SagaStatus;
 import com.saga_pattern.orchestrator.repository.OrchestratorRepository;
 import com.saga_pattern.orchestrator.service.OrchestratorService;
@@ -71,10 +73,10 @@ public class OrchestratorServiceImpl implements OrchestratorService {
         if (saga.getCurrentStep() != CurrentStep.FLIGHT) {
             return;
         }
-            saga.setSagaStatus(SagaStatus.IN_PROGRESS);
-            saga.setCurrentStep(CurrentStep.HOTEL);
-            orchestratorRepository.save(saga);
 
+        saga.setSagaStatus(SagaStatus.IN_PROGRESS);
+        saga.setCurrentStep(CurrentStep.HOTEL);
+        orchestratorRepository.save(saga);
 
         ReserveHotelCommand command = new ReserveHotelCommand(
                 UUID.randomUUID().toString(),
@@ -88,5 +90,32 @@ public class OrchestratorServiceImpl implements OrchestratorService {
         commandPublisher.hotelPublish(command);
     }
 
+    @Override
+    public void handleHotelReservationResult(HotelReservationResultEvent event) {
+        if (event == null) {
+            return;
+        }
 
+        SagaInstance saga = orchestratorRepository.findBySagaId(event.sagaId())
+                .orElseThrow(() -> new SagaNotFoundException(event.sagaId()));
+
+        if (saga.getCurrentStep() != CurrentStep.HOTEL) {
+            return;
+        }
+
+        if (event.eventType() == EventType.HOTEL_RESERVATION_FAILED) {
+            saga.setSagaStatus(SagaStatus.FAILED);
+            saga.setFailureReason(event.failureReason());
+            orchestratorRepository.save(saga);
+            return;
+        }
+
+        if (event.eventType() != EventType.HOTEL_RESERVED) {
+            return;
+        }
+
+        saga.setSagaStatus(SagaStatus.IN_PROGRESS);
+        saga.setCurrentStep(CurrentStep.CAR);
+        orchestratorRepository.save(saga);
+    }
 }

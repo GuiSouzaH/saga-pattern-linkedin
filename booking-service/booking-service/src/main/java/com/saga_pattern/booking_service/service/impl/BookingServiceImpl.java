@@ -50,8 +50,8 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public Optional<Booking> getBookingByCustomerId(String productId)
+    public Optional<Booking> getBookingByCustomerId(String customerId)
     {
-        return bookingRepository.findByCustomerId(productId);
+        return bookingRepository.findByCustomerId(customerId);
     }
 }
